@@ -33,6 +33,28 @@ class AsyncGraph:
         self._nodes: dict[str, _Node] = {}
         self._nodes_to_edges: OrderedDict[str, set[str]] = OrderedDict()
 
+    def depends_on(self, src_nodes: None | str | Callable | List[str | Callable] = None, **kwargs):
+        """Decorator for add_node and add_edge.
+
+        Parameters
+        ----------
+        src_nodes: None | str | Callable | List[str | Callable], optional
+            The source node(s) of the edge. If ``None``, ignore :meth:`~async_graph_data_flow.AsyncGraph.add_edge`. Defaults to ``None``.
+        kwargs: Any, optional
+            The configurations of the node, see :meth:`~async_graph_data_flow.AsyncGraph.add_node` parameters. Defaults to ``{}``.
+        """
+
+        def wrapper(func):
+            self.add_node(func, **kwargs)
+            if isinstance(src_nodes, list):
+                for node in src_nodes:
+                    self.add_edge(node, func)
+            elif src_nodes is not None:
+                self.add_edge(src_nodes, func)
+            return func
+
+        return wrapper
+
     def add_node(
         self,
         func: Callable,
